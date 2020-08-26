@@ -1,0 +1,228 @@
+17.1 sm-t350 working camera, bluetooth and external audio.
+
+$ repo diff
+
+project device/samsung/gt58wifi/
+diff --git a/board/device-init.mk b/board/device-init.mk
+deleted file mode 100755
+index 45a0bcb..0000000
+--- a/board/device-init.mk
++++ /dev/null
+@@ -1,2 +0,0 @@
+-# The first api level the device has commercially launched on
+-PRODUCT_SHIPPING_API_LEVEL := 21
+\ No newline at end of file
+diff --git a/product/audio.mk b/product/audio.mk
+index 4304ca9..0853d16 100755
+--- a/product/audio.mk
++++ b/product/audio.mk
+@@ -1,5 +1,21 @@
+ # Audio configuration file
+-AUDIO_CONFIG_PATH := hardware/qcom/audio-caf/msm8916/configs
++
++# RT - change audio config path file due to 17.1
++
++AUDIO_CONFIG_PATH := hardware/qcom-caf/msm8916/audio/configs
++
++# RT - The file speaker amp file Tfa9895.cnt is NOT in the github.com/Galaxy-MSM8916/proprietary_vendor_samsung repo.
++
++PRODUCT_COPY_FILES += \
++       vendor/samsung/gt58wifi/proprietary/etc/Tfa9895.cnt:$(TARGET_COPY_OUT_SYSTEM)/etc/Tfa9895.cnt \
++       vendor/samsung/gt58wifi/proprietary/lib/libtfa9895.so:$(TARGET_COPY_OUT_SYSTEM)/lib/libtfa9895.so
++       
++# RT - The audio.primary.msm8916.so MUST reside in /vendor/lib/hw or else lineageos code will build it, but won't work
++# without the tfa9895 drivers.
++
++PRODUCT_COPY_FILES += \
++       vendor/samsung/gt58wifi/proprietary/lib/hw/audio.primary.msm8916.so:$(TARGET_COPY_OUT_VENDOR)/lib/hw/audio.primary.msm8916.so
++
+ PRODUCT_COPY_FILES += \
+        $(AUDIO_CONFIG_PATH)/msm8916_32/audio_output_policy.conf:$(TARGET_COPY_OUT_SYSTEM)/etc/audio_output_policy.conf \
+        $(AUDIO_CONFIG_PATH)/msm8916_32/audio_policy.conf:$(TARGET_COPY_OUT_SYSTEM)/etc/audio_policy.conf \
+diff --git a/product/bluetooth.mk b/product/bluetooth.mk
+index c1c6a28..cb8f4f3 100755
+--- a/product/bluetooth.mk
++++ b/product/bluetooth.mk
+@@ -1,4 +1,7 @@
++# RT Bluetooth crashes because of missing libbtnv.so in 17.1.  Let's copy it over.
++
+ # Bluetooth
+ PRODUCT_COPY_FILES += \
+     $(LOCAL_PATH)/configs/bluetooth/iop_bt.db:system/etc/bluetooth/iop_bt.db \
+-    $(LOCAL_PATH)/configs/bluetooth/iop_device_list.conf:system/etc/bluetooth/iop_device_list.conf
++    $(LOCAL_PATH)/configs/bluetooth/iop_device_list.conf:system/etc/bluetooth/iop_device_list.conf \
++    vendor/samsung/msm8916-common/proprietary/vendor/lib/libbtnv.so:$(TARGET_COPY_OUT_VENDOR)/lib/libbtnv.so
+diff --git a/product/camera.mk b/product/camera.mk
+index 93efe4b..cf1176b 100755
+--- a/product/camera.mk
++++ b/product/camera.mk
+@@ -1,10 +1,24 @@
++# RT camera proprietary blobs needs to be copied over.  All the camera blobs that have 9804 and 544 are not in the MSM8916 vendor repo.
++
++PRODUCT_COPY_FILES += \
++               vendor/samsung/gt58wifi/proprietary/lib/hw/camera.vendor.msm8916.so:/vendor/lib/hw/camera.vendor.msm8916.so \
++               vendor/samsung/msm8916-common/proprietary/vendor/lib/libQSEEComAPI.so:$(TARGET_COPY_OUT_VENDOR)/lib/libQSEEComAPI.so \
++    vendor/samsung/gt58wifi/proprietary/vendor/lib/libactuator_dw9804_rossa_camcorder.so:$(TARGET_COPY_OUT_VENDOR)/lib/libactuator_dw9804_rossa_camcorder.s>
++    vendor/samsung/gt58wifi/proprietary/vendor/lib/libactuator_dw9804_rossa_camera.so:$(TARGET_COPY_OUT_VENDOR)/lib/libactuator_dw9804_rossa_camera.so \
++    vendor/samsung/gt58wifi/proprietary/vendor/lib/libchromatix_sr544_common.so:$(TARGET_COPY_OUT_VENDOR)/lib/libchromatix_sr544_common.so \
++    vendor/samsung/gt58wifi/proprietary/vendor/lib/libchromatix_sr544_default_video.so:$(TARGET_COPY_OUT_VENDOR)/lib/libchromatix_sr544_default_video.so \
++    vendor/samsung/gt58wifi/proprietary/vendor/lib/libchromatix_sr544_panorama.so:$(TARGET_COPY_OUT_VENDOR)/lib/libchromatix_sr544_panorama.so \
++    vendor/samsung/gt58wifi/proprietary/vendor/lib/libchromatix_sr544_preview.so:$(TARGET_COPY_OUT_VENDOR)/lib/libchromatix_sr544_preview.so \
++    vendor/samsung/gt58wifi/proprietary/vendor/lib/libchromatix_sr544_snapshot.so:$(TARGET_COPY_OUT_VENDOR)/lib/libchromatix_sr544_snapshot.so \
++    vendor/samsung/gt58wifi/proprietary/vendor/lib/libchromatix_sr544_zslshot.so:$(TARGET_COPY_OUT_VENDOR)/lib/libchromatix_sr544_zslshot.so
++
+ # Camera
+ PRODUCT_PACKAGES += \
+     libqc-opt
+ 
+ # Configs
+ PRODUCT_COPY_FILES += \
+-    $(LOCAL_PATH)/configs/camera/A05QF_sr544_module_info.xml:system/etc/A05QF_sr544_module_info.xml \
+-    $(LOCAL_PATH)/configs/camera/A05QF_sr544_module_info.xml:system/etc/B05QF_sr544_module_info.xml \
+-    $(LOCAL_PATH)/configs/camera/A05QF_sr544_module_info.xml:system/etc/C05QF_sr544_module_info.xml
++    device/samsung/gt58wifi/configs/camera/A05QF_sr544_module_info.xml:$(TARGET_COPY_OUT_SYSTEM)/etc/A05QF_sr544_module_info.xml \
++    device/samsung/gt58wifi/configs/camera/A05QF_sr544_module_info.xml:$(TARGET_COPY_OUT_SYSTEM)/etc/B05QF_sr544_module_info.xml \
++    device/samsung/gt58wifi/configs/camera/A05QF_sr544_module_info.xml:$(TARGET_COPY_OUT_SYSTEM)/etc/C05QF_sr544_module_info.xml
+ 
+diff --git a/proprietary-files.txt b/proprietary-files.txt
+index 86e007f..463acab 100755
+--- a/proprietary-files.txt
++++ b/proprietary-files.txt
+@@ -26,6 +26,11 @@ lib/lib_SoundAlive_SRC384_ver300.so:vendor/lib/lib_SoundAlive_SRC384_ver300.so
+ lib/libfloatingfeature.so:vendor/lib/libfloatingfeature.so
+ lib/libtfa9895.so:vendor/lib/libtfa9895.so|b217980c2206ff4053b2332a9bffd21f0df7efd9
+ 
++# RT needed libbtnv.so so Bluetooth doesn't crash
++
++# Bluetooth
++lib/libbtnv.so:vendor/lib/libbtnv.so
++
+ # Camera
+ lib/hw/camera.msm8916.so:vendor/lib/hw/camera.vendor.msm8916.so
+ lib/libaec_algo_front.so:vendor/lib/libaec_algo_front.so
+
+project device/samsung/msm8916-common/
+diff --git a/camera/CameraWrapper.cpp b/camera/CameraWrapper.cpp
+index bad685a..90f7646 100644
+--- a/camera/CameraWrapper.cpp
++++ b/camera/CameraWrapper.cpp
+@@ -33,7 +33,10 @@
+ #include <camera/Camera.h>
+ #include <camera/CameraParameters.h>
+ 
+-static const char PIXEL_FORMAT_YUV420SP_NV21E[] = "yuv420sp-nv21e";
++/* RT Camera variable below for 17.1 */
++
++/* static const char PIXEL_FORMAT_YUV420SP_NV21E[] = "yuv420sp-nv21e"; */
++static const char PIXEL_FORMAT_YUV420SP_NV21E[] = "_ZN7android16CameraParameters26PIXEL_FORMAT_YUV420SP_NV21E";
+ 
+ static android::Mutex gCameraWrapperLock;
+ static camera_module_t *gVendorModule = 0;
+diff --git a/manifest.xml b/manifest.xml
+index 8b15870..3a3690e 100644
+--- a/manifest.xml
++++ b/manifest.xml
+@@ -2,7 +2,7 @@
+     <hal format="hidl">
+         <name>android.hardware.audio</name>
+         <transport>hwbinder</transport>
+-        <version>5.0</version>
++        <version>2.0</version>
+         <interface>
+             <name>IDevicesFactory</name>
+             <instance>default</instance>
+@@ -11,7 +11,7 @@
+     <hal format="hidl">
+         <name>android.hardware.audio.effect</name>
+         <transport>hwbinder</transport>
+-        <version>5.0</version>
++        <version>2.0</version>
+         <interface>
+             <name>IEffectsFactory</name>
+             <instance>default</instance>
+@@ -248,7 +248,7 @@
+     </hal>
+     <hal format="hidl">
+         <name>android.hardware.vibrator</name>
+-        <transport>hwbinder</transport>
++        <transport arch="32+64">passthrough</transport>
+         <version>1.0</version>
+         <interface>
+             <name>IVibrator</name>
+diff --git a/msm8916.mk b/msm8916.mk
+index 2c018c8..e448b81 100644
+--- a/msm8916.mk
++++ b/msm8916.mk
+@@ -38,17 +38,28 @@ PRODUCT_PROPERTY_OVERRIDES += \
+     ro.opa.eligible_device=true
+ 
+ # Audio
++
++# RT take out all 5.0 binder stuff.  It causes stuck at boot logo because it's crashing on gt58wifi.
++# You also need to change the 5.0 to 2.0 in the 
++#
++# device/samsung/msm8916-common/manifest.xml
++
++#    android.hardware.audio@5.0 \
++#    android.hardware.audio@5.0-impl \
++#    android.hardware.audio.common@5.0 \
++#    android.hardware.audio.common@5.0-util \
++#    android.hardware.audio.effect@5.0 \
++#    android.hardware.audio.effect@5.0-impl \
++
++# This committ broke it
++#
++# https://github.com/Galaxy-MSM8916/android_device_samsung_msm8916-common/commit/bbe7a62c17b1c73c4bb69483adcd81a819d48572#diff-29ef6f5c30334151da1bfd924cd8>
++
+ PRODUCT_PACKAGES += \
+     android.hardware.audio@2.0-impl \
+     android.hardware.audio@2.0-service \
+-    android.hardware.audio@5.0 \
+-    android.hardware.audio@5.0-impl \
+-    android.hardware.audio.common@5.0 \
+-    android.hardware.audio.common@5.0-util \
+     android.hardware.audio.effect@2.0-impl \
+     android.hardware.audio.effect@2.0-service \
+-    android.hardware.audio.effect@5.0 \
+-    android.hardware.audio.effect@5.0-impl \
+     android.hardware.soundtrigger@2.2-impl \
+     audio.a2dp.default \
+     audio.bluetooth.default \
+@@ -515,6 +526,19 @@ PRODUCT_PACKAGES += \
+ # Vendor security patch level
+ PRODUCT_PROPERTY_OVERRIDES += \
+     ro.lineage.build.vendor_security_patch=2017-09-01
++    
++# RT The binderized vibrator hal causes a stuck at boot logo.  You must use passthrough instead.
++#
++# <transport arch="32+64">passthrough</transport>
++#
++# The above is changed in 
++#
++# device/samsung/msm8916-common/manifest.xml
++#
++# This committ broke it
++#
++# https://github.com/Galaxy-MSM8916/android_device_samsung_msm8916-common/commit/f9436ff31006498d08380b967ffd748323a702d1#diff-29ef6f5c30334151da1bfd924cd8>
++
+ 
+ # Vibrator
+ PRODUCT_PACKAGES += \
+diff --git a/rootdir/etc/ueventd.qcom.rc b/rootdir/etc/ueventd.qcom.rc
+index e44b79d..f4a5cf0 100644
+--- a/rootdir/etc/ueventd.qcom.rc
++++ b/rootdir/etc/ueventd.qcom.rc
+@@ -179,7 +179,13 @@ subsystem msm_camera
+ /dev/sdio_tty_ciq_00      0660   system     system
+ /dev/tty_sdio_00          0660   system     system
+ /dev/ttyGS0               0660   system     system
+-/dev/i2c-5                0660   media       media
++
++# RT need to add /dev/i2c-1 for gt58wifi in 17.1 otherwise we get the following crash
++# "tfa98xx: ERROR vendor/samsung/frameworks/audio/tfa_amp/TFA9895/hal/src/lxScribo/lxI2c.c:lxI2cInit:124: Can't open i2c bus:/dev/i2c-1"
++# HalDeathHandler: HAL server crashed, audio server is restarting
++
++/dev/i2c-1                0660   audio      audio
++/dev/i2c-5                0660   media      media
+ /dev/voice_svc            0660   system     audio
+ /dev/avtimer              0660   system     audio
